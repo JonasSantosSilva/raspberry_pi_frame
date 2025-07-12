@@ -2,7 +2,7 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Tkinter frames removed
+## Release notes: Image resize included
 #######################################################################################################################
 
 ############################### Imports ##############################################################################
@@ -15,9 +15,9 @@ root = Tk()
 
 ############################### Settings ##############################################################################
 #root.minsize(900, 900)
-root.geometry("1000x1000")
+#root.geometry("1000x1000")
 root.title("## Test ##")
-#root.attributes('-fullscreen', True)
+root.attributes('-fullscreen', True)
 image_location = "Images/background_example.jpeg"
 image_backbutton_location = 'Images/right_transparent_arrow.png'
 image_forwardbutton_location = 'Images/right_transparent_arrow.png'
@@ -28,14 +28,15 @@ def fullscreen():
     return
 
 ############################### Image ###################################################################################
-print("Window With ", root.winfo_screenwidth())
-print("Window Heigh ", root.winfo_screenheight())
+#print("Window With ", root.winfo_screenwidth())
+#print("Window Heigh ", root.winfo_screenheight())
 win_width = root.winfo_screenwidth()
 win_height = root.winfo_screenheight()
 
-image_resized = ImageTk.PhotoImage(Image.open(image_location).resize((400, 400), Image.ANTIALIAS)) # Open and resize image
-image_resized_lable = Label(root, image=image_resized).grid(row=0, columnspan=5, sticky="ew") # Place resized image onto screen
-
+my_image = Image.open(image_location) # Open Image
+resized_image = my_image.resize((win_width, win_height-30), Image.ANTIALIAS) # Resize Image
+new_image = ImageTk.PhotoImage(resized_image) # Define the image
+Label(root, image=new_image).grid(row=0, columnspan=5, sticky="ew")
 
 ###############################  Menu ##################################################################################
 image_forwardbutton = PhotoImage(file=image_forwardbutton_location).subsample(button_subsample_factor, button_subsample_factor)
