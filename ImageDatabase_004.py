@@ -2,7 +2,7 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Image resize included
+## Release notes: Image ratio adjustment added
 #######################################################################################################################
 
 ############################### Imports ##############################################################################
@@ -18,23 +18,33 @@ root = Tk()
 #root.geometry("1000x1000")
 root.title("## Test ##")
 root.attributes('-fullscreen', True)
-image_location = "Images/background_example.jpeg"
+image_location = "Images/big_image.jpeg"
 image_backbutton_location = 'Images/right_transparent_arrow.png'
 image_forwardbutton_location = 'Images/right_transparent_arrow.png'
 button_subsample_factor = 8
+vertical_menu_offset = 30
+
 
 ############################### Definitions - Functions #################################################################
 def fullscreen():
     return
 
 ############################### Image ###################################################################################
-#print("Window With ", root.winfo_screenwidth())
-#print("Window Heigh ", root.winfo_screenheight())
+print("Window With ", root.winfo_screenwidth())
+print("Window Heigh ", root.winfo_screenheight())
 win_width = root.winfo_screenwidth()
 win_height = root.winfo_screenheight()
 
-my_image = Image.open(image_location) # Open Image
-resized_image = my_image.resize((win_width, win_height-30), Image.ANTIALIAS) # Resize Image
+curr_image = Image.open(image_location) # Open Image
+image_width, image_height = curr_image.size # Get image dimentions
+
+w_ratio = root.winfo_screenwidth() / image_width # Calculate width ration between screen and image
+h_ratio = (root.winfo_screenheight() - vertical_menu_offset) / image_height # Calculate height ration between screen and image
+
+if h_ratio < w_ratio: w_ratio = h_ratio # Set up smallest ratio
+elif w_ratio < h_ratio: h_ratio = w_ratio # Set up smallest ratio
+
+resized_image = curr_image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS) # Resize Image
 new_image = ImageTk.PhotoImage(resized_image) # Define the image
 Label(root, image=new_image).grid(row=0, columnspan=5, sticky="ew")
 
