@@ -2,7 +2,7 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Image ratio adjustment added
+## Release notes: Image set as a button
 #######################################################################################################################
 
 ############################### Imports ##############################################################################
@@ -18,20 +18,21 @@ root = Tk()
 #root.geometry("1000x1000")
 root.title("## Test ##")
 root.attributes('-fullscreen', True)
+
 image_location = "Images/big_image.jpeg"
 image_backbutton_location = 'Images/right_transparent_arrow.png'
 image_forwardbutton_location = 'Images/right_transparent_arrow.png'
+
 button_subsample_factor = 8
 vertical_menu_offset = 30
-
 
 ############################### Definitions - Functions #################################################################
 def fullscreen():
     return
 
 ############################### Image ###################################################################################
-print("Window With ", root.winfo_screenwidth())
-print("Window Heigh ", root.winfo_screenheight())
+#print("Window With ", root.winfo_screenwidth())
+#print("Window Heigh ", root.winfo_screenheight())
 win_width = root.winfo_screenwidth()
 win_height = root.winfo_screenheight()
 
@@ -46,19 +47,19 @@ elif w_ratio < h_ratio: h_ratio = w_ratio # Set up smallest ratio
 
 resized_image = curr_image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS) # Resize Image
 new_image = ImageTk.PhotoImage(resized_image) # Define the image
-Label(root, image=new_image).grid(row=0, columnspan=5, sticky="ew")
+Button(root, image=new_image, command=root.destroy, cursor='hand2').grid(row=0, columnspan=5, sticky="ew")
 
 ###############################  Menu ##################################################################################
 image_forwardbutton = PhotoImage(file=image_forwardbutton_location).subsample(button_subsample_factor, button_subsample_factor)
 image_backbutton = PhotoImage(file=image_backbutton_location).subsample(button_subsample_factor, button_subsample_factor)
 
 #backbutton = Button(root, image=image_backbutton, command=thing2, borderwidth=0, cursor='hand2')
-backbutton = Button(root, text = "Back", command=root.destroy, cursor='hand2')
+backbutton = Button(root, text = "<< Back", command=root.destroy, cursor='hand2')
 fullscreenbutton = Button(root, text = "Full Screen", command=fullscreen, cursor='hand2')
 exitbutton = Button(root, text = "Exit Program", command=root.destroy, cursor='hand2')
 menubutton = Button(root, text = "Menu", command=root.destroy, cursor='hand2')
 #forwardbutton = Button(root, image=image_forwardbutton, command=thing1, borderwidth=0, cursor='hand2')
-forwardbutton = Button(root, text = "Forward", command=root.destroy, cursor='hand2')
+forwardbutton = Button(root, text = "Forward >>", command=root.destroy, cursor='hand1')
 
 side_buttons = [backbutton, forwardbutton]
 middle_buttons = [fullscreenbutton, exitbutton, menubutton]
