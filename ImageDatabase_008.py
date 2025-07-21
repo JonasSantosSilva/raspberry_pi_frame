@@ -2,11 +2,9 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Included if __name__ and try conditions
-##                Defined main function
-##                Created main menu
-##                Linked picture button from main menu to image screen
-##                Implemented resizeimage_to_fit function 
+## Release notes: Implemented Fullscreen image feature
+##                Added full screen toggle comamand to image button
+##                
 #######################################################################################################################
 
 ############################### Imports ##############################################################################
@@ -39,49 +37,72 @@ vertical_menu_offset = 30
 
 ############################### Definitions - Functions #################################################################
 
+def resizeimage_to_fit(image, fit_width, fit_height): # Resize image to fit a rectangle fit_width x fit_height
+    global win_width, win_height 
+    image_width, image_height = image.size # Get image dimentions
+
+    w_ratio = fit_width / image_width # Calculate width ration between input width and image
+    h_ratio = fit_height / image_height # Calculate height ration between input height and image
+
+    if h_ratio < w_ratio: w_ratio = h_ratio # Set up smallest ratio
+    elif w_ratio < h_ratio: h_ratio = w_ratio # Set up smallest ratio
+    
+    return ImageTk.PhotoImage(image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS)) # Resize Image
+
+
 def forward():
     global img_index, list_len
     if img_index == list_len-1: img_index = 0
     else: img_index += 1
-    image_update()
+    image_put()
         
         
 def back():
     global img_index, list_len
     if img_index == 0: img_index = list_len-1
     else: img_index -= 1
-    image_update()
+    image_put()
 
 
-def fullscreen():
-    return
-
-
-def image_update():
-    global root, img_index, image_list, vertical_menu_offset, list_len, new_image, win_width, win_height
+def fullscreen_toggle():
+    global current_screen, backbutton, fullscreenbutton, exitbutton, menubutton, forwardbutton, curr_image_button
+    curr_image_button.destroy()
+    if current_screen == 1: # 1 Image menu
+        backbutton.destroy()
+        fullscreenbutton.destroy()
+        exitbutton.destroy()
+        menubutton.destroy()
+        forwardbutton.destroy()
+        current_screen = 2
+    elif current_screen == 2: # 2 Image full screen
+        current_screen = 1
+        pic_menu_put()
     
-    curr_image = Image.open(image_list[img_index]) # Open Image
-    image_width, image_height = curr_image.size # Get image dimentions
+    image_put()
 
-    w_ratio = root.winfo_screenwidth() / image_width # Calculate width ration between screen and image
-    h_ratio = (root.winfo_screenheight() - vertical_menu_offset) / image_height # Calculate height ration between screen and image
 
-    if h_ratio < w_ratio: w_ratio = h_ratio # Set up smallest ratio
-    elif w_ratio < h_ratio: h_ratio = w_ratio # Set up smallest ratio
+def image_put():
+    global root, img_index, image_list, vertical_menu_offset, list_len
+    global win_width, win_height, curr_image_button, current_screen, curr_image
+
+    if current_screen == 1: # 1 Image menu
+        curr_image = resizeimage_to_fit(Image.open(image_list[img_index]), root.winfo_screenwidth(), (root.winfo_screenheight() - vertical_menu_offset))
+    elif current_screen == 2: # 2 Image full screen
+        curr_image = resizeimage_to_fit(Image.open(image_list[img_index]), root.winfo_screenwidth(), root.winfo_screenheight())
+    else: return 1
     
-    resized_image = curr_image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS) # Resize Image
-    new_image = ImageTk.PhotoImage(resized_image) # Define the image
-    Button(root, image=new_image, command=root.destroy, cursor='hand2').grid(row=0, columnspan=5, sticky="ew")
+    curr_image_button = Button(root, image=curr_image, command=fullscreen_toggle, cursor='hand2')
+    curr_image_button.grid(row=0, columnspan=5, sticky="ew")
 
 
-def menu_update():
-    global root, vertical_menu_offset
+def pic_menu_put():
+    global root, vertical_menu_offset, backbutton, fullscreenbutton, exitbutton, menubutton, forwardbutton
     #image_forwardbutton = PhotoImage(file=image_forwardbutton_location).subsample(button_subsample_factor, button_subsample_factor)
     #image_backbutton = PhotoImage(file=image_backbutton_location).subsample(button_subsample_factor, button_subsample_factor)
 
     #backbutton = Button(root, image=image_backbutton, command=thing2, borderwidth=0, cursor='hand2')
     backbutton = Button(root, text = "<< Back", command=back, cursor='hand2')
-    fullscreenbutton = Button(root, text = "Full Screen", command=fullscreen, cursor='hand2')
+    fullscreenbutton = Button(root, text = "Full Screen", command=fullscreen_toggle, cursor='hand2')
     exitbutton = Button(root, text = "Exit Program", command=root.destroy, cursor='hand2')
     menubutton = Button(root, text = "Menu", command=root.destroy, cursor='hand2')
     #forwardbutton = Button(root, image=image_forwardbutton, command=thing1, borderwidth=0, cursor='hand2')
@@ -102,19 +123,6 @@ def menu_update():
         button.grid(row=1, column=index_b+1, sticky="ew", padx=1, pady=1)
 
 
-def resizeimage_to_fit(image, fit_width, fit_height): # Resize image to fit a rectangle fit_width x fit_height
-    global win_width, win_height 
-    image_width, image_height = image.size # Get image dimentions
-
-    w_ratio = fit_width / image_width # Calculate width ration between input width and image
-    h_ratio = fit_height / image_height # Calculate height ration between input height and image
-
-    if h_ratio < w_ratio: w_ratio = h_ratio # Set up smallest ratio
-    elif w_ratio < h_ratio: h_ratio = w_ratio # Set up smallest ratio
-    
-    return ImageTk.PhotoImage(image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS)) # Resize Image
-
-
 def pictures_menu():
     global current_screen, list_mainmenu_buttons
     current_screen = 1
@@ -122,8 +130,8 @@ def pictures_menu():
     for index in range (0, len(list_mainmenu_buttons)):
         list_mainmenu_buttons[index].destroy()
         
-    image_update() # Put first image onto window
-    menu_update() # Put the first tiem the menu onto window
+    image_put() # Put first image onto window
+    pic_menu_put() # Put the first tiem the menu onto window
     
     
 def load_mainmenu_images():
@@ -143,11 +151,6 @@ def main_menu():
     Grid.rowconfigure(root, index=1, weight=1) # index is the row number
     Grid.columnconfigure(root, index=1, weight=1)
 
-#     Button(root, image=img_picturesbutton, command=pictures_menu, cursor='hand2').grid(row=0, column=0, sticky="ew")
-#     Button(root, image=img_locationbutton, command=root.destroy, cursor='hand2').grid(row=0, column=1, sticky="ew")
-#     Button(root, image=img_settingsbutton, command=root.destroy, cursor='hand2').grid(row=1, column=0, sticky="ew")
-#     Button(root, image=img_exitbutton, command=root.destroy, cursor='hand2').grid(row=1, column=1, sticky="ew")
-
     picturesbutton = Button(root, image=img_picturesbutton, command=pictures_menu, cursor='hand2')
     locationbutton = Button(root, image=img_locationbutton, command=root.destroy, cursor='hand2')
     settingsbutton = Button(root, image=img_settingsbutton, command=root.destroy, cursor='hand2')
@@ -160,13 +163,14 @@ def main_menu():
 
     list_mainmenu_buttons = [picturesbutton, locationbutton, settingsbutton, exitbutton]
 
+
 def main():
     global current_screen
     if current_screen == 0: # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
         main_menu()
     elif current_screen == 1:
-        image_update() # Put first image onto window
-        menu_update() # Put the first tiem the menu onto window
+        image_put() # Put first image onto window
+        pic_menu_put() # Put the first tiem the menu onto window
     # Main Loop
     root.mainloop()
 
@@ -176,6 +180,7 @@ image_list = [image_1_location, image_2_location, image_3_location] # Set up a l
 img_index = 0
 list_len = len(image_list)
 current_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
+#last_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
 win_width = root.winfo_screenwidth()
 win_height = root.winfo_screenheight()
 
