@@ -2,8 +2,8 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Implemented Fullscreen image feature
-##                Added full screen toggle comamand to image button
+## Release notes: Implemented methods to destroy widgets
+##                Changed fullscreen_toggle function to use widgets destroy methods
 ##                
 #######################################################################################################################
 
@@ -32,8 +32,8 @@ img_locationbutton_location = "Images/location_icon_1.png"
 image_backbutton_location = 'Images/right_transparent_arrow.png'
 image_forwardbutton_location = 'Images/right_transparent_arrow.png'
 
-button_subsample_factor = 8
-vertical_menu_offset = 30
+vertical_menu_offset = 30 # Offset to fit the image menu
+current_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
 
 ############################### Definitions - Functions #################################################################
 
@@ -65,20 +65,17 @@ def back():
 
 
 def fullscreen_toggle():
-    global current_screen, backbutton, fullscreenbutton, exitbutton, menubutton, forwardbutton, curr_image_button
-    curr_image_button.destroy()
     if current_screen == 1: # 1 Image menu
-        backbutton.destroy()
-        fullscreenbutton.destroy()
-        exitbutton.destroy()
-        menubutton.destroy()
-        forwardbutton.destroy()
-        current_screen = 2
+        pic_menu_destroy(2)
     elif current_screen == 2: # 2 Image full screen
-        current_screen = 1
-        pic_menu_put()
-    
-    image_put()
+        image_destroy(1)
+
+
+def image_destroy(next_screen):
+    global current_screen
+    current_screen = next_screen # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
+    curr_image_button.destroy()
+    main()
 
 
 def image_put():
@@ -95,14 +92,24 @@ def image_put():
     curr_image_button.grid(row=0, columnspan=5, sticky="ew")
 
 
+def pic_menu_destroy(next_screen): # next_screen -> 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
+    global list_mainmenu_buttons
+    
+    all_buttons_list = side_buttons
+    all_buttons_list.extend(middle_buttons)
+    for button in all_buttons_list:
+        button.destroy()
+    image_destroy(next_screen)
+
+
 def pic_menu_put():
-    global root, vertical_menu_offset, backbutton, fullscreenbutton, exitbutton, menubutton, forwardbutton
+    global root, vertical_menu_offset, backbutton, fullscreenbutton, exitbutton, menubutton, forwardbutton, side_buttons, middle_buttons
     #image_forwardbutton = PhotoImage(file=image_forwardbutton_location).subsample(button_subsample_factor, button_subsample_factor)
     #image_backbutton = PhotoImage(file=image_backbutton_location).subsample(button_subsample_factor, button_subsample_factor)
 
     #backbutton = Button(root, image=image_backbutton, command=thing2, borderwidth=0, cursor='hand2')
     backbutton = Button(root, text = "<< Back", command=back, cursor='hand2')
-    fullscreenbutton = Button(root, text = "Full Screen", command=fullscreen_toggle, cursor='hand2')
+    fullscreenbutton = Button(root, text = "Full Screen", command=lambda: pic_menu_destroy(2), cursor='hand2')
     exitbutton = Button(root, text = "Exit Program", command=root.destroy, cursor='hand2')
     menubutton = Button(root, text = "Menu", command=root.destroy, cursor='hand2')
     #forwardbutton = Button(root, image=image_forwardbutton, command=thing1, borderwidth=0, cursor='hand2')
@@ -126,10 +133,7 @@ def pic_menu_put():
 def pictures_menu():
     global current_screen, list_mainmenu_buttons
     current_screen = 1
-    index = 0
-    for index in range (0, len(list_mainmenu_buttons)):
-        list_mainmenu_buttons[index].destroy()
-        
+       
     image_put() # Put first image onto window
     pic_menu_put() # Put the first tiem the menu onto window
     
@@ -142,7 +146,16 @@ def load_mainmenu_images():
     img_locationbutton = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[1]), (root.winfo_screenwidth()/2) , (root.winfo_screenheight()/2) )   
     img_picturesbutton = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[2]), (root.winfo_screenwidth()/2) , (root.winfo_screenheight()/2) )
     img_exitbutton = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[3]), (root.winfo_screenwidth()/2) , (root.winfo_screenheight()/2) )   
-       
+
+
+def main_menu_destroy(next_screen):
+    global list_mainmenu_buttons, current_screen
+    current_screen = next_screen # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
+    for index in range (0, len(list_mainmenu_buttons)):
+        list_mainmenu_buttons[index].destroy()
+    main()
+    
+
 def main_menu():
     global root, list_mainmenu_imgs_locations, list_mainmenu_buttons
     
@@ -151,9 +164,9 @@ def main_menu():
     Grid.rowconfigure(root, index=1, weight=1) # index is the row number
     Grid.columnconfigure(root, index=1, weight=1)
 
-    picturesbutton = Button(root, image=img_picturesbutton, command=pictures_menu, cursor='hand2')
-    locationbutton = Button(root, image=img_locationbutton, command=root.destroy, cursor='hand2')
-    settingsbutton = Button(root, image=img_settingsbutton, command=root.destroy, cursor='hand2')
+    picturesbutton = Button(root, image=img_picturesbutton, command=lambda: main_menu_destroy(1), cursor='hand2')
+    locationbutton = Button(root, image=img_locationbutton, command=lambda: main_menu_destroy(3), cursor='hand2')
+    settingsbutton = Button(root, image=img_settingsbutton, command=lambda: main_menu_destroy(4), cursor='hand2')
     exitbutton = Button(root, image=img_exitbutton, command=root.destroy, cursor='hand2')
 
     picturesbutton.grid(row=0, column=0, sticky="ew")
@@ -166,20 +179,25 @@ def main_menu():
 
 def main():
     global current_screen
-    if current_screen == 0: # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
+    if current_screen == 0: # 0 Main menu
         main_menu()
-    elif current_screen == 1:
-        image_put() # Put first image onto window
-        pic_menu_put() # Put the first tiem the menu onto window
-    # Main Loop
-    root.mainloop()
+    elif current_screen == 1: # 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
+        image_put() # Put image onto window
+        pic_menu_put() # Put the image menu onto window
+    elif current_screen == 2: # 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
+        image_put()
+    root.mainloop()# Main Loop
+
+
+def load_files():
+    load_mainmenu_images()
+    
 
 ############################### Definitions - Global Variables #######################################################
 list_mainmenu_imgs_locations = [img_settingsbutton_location, img_locationbutton_location, img_picturesbutton_location, img_exitbutton_location]
 image_list = [image_1_location, image_2_location, image_3_location] # Set up a list of image locations
 img_index = 0
 list_len = len(image_list)
-current_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
 #last_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
 win_width = root.winfo_screenwidth()
 win_height = root.winfo_screenheight()
@@ -187,7 +205,7 @@ win_height = root.winfo_screenheight()
 ############################### Main Condition/Loop ##################################################################
 if __name__ == "__main__":
     try:
-        load_mainmenu_images()
+        load_files()
         while True:
             main()
     except:
