@@ -2,15 +2,15 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Implemented methods to destroy widgets
-##                Changed fullscreen_toggle function to use widgets destroy methods
+## Release notes: Implemented class menuImg
+##                
 ##                
 #######################################################################################################################
 
 ############################### Imports ##############################################################################
 from tkinter import *
 from PIL import ImageTk, Image
-from tkinter import filedialog
+#from tkinter import filedialog
 
 ############################### Definitions - Main Window ####################################################################
 root = Tk()
@@ -35,9 +35,25 @@ image_forwardbutton_location = 'Images/right_transparent_arrow.png'
 vertical_menu_offset = 30 # Offset to fit the image menu
 current_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
 
+
+############################### Definitions - Classes #################################################################
+class menuImg:
+    def __init__(self, image=None, width=None, height=None, tkindex=None):
+        """Constructor Method"""
+        self.image = image
+        self.width = width
+        self.height = height
+        self.tkindex = tkindex
+    def __str__(self): # STR Method - to print the class
+        return self.image
+    def info(self):
+        """This Method return information about the class menuImg."""
+        return f"This is a image used in the manu screens, Width {self.width} Height{self.height}."
+
+
 ############################### Definitions - Functions #################################################################
 
-def resizeimage_to_fit(image, fit_width, fit_height): # Resize image to fit a rectangle fit_width x fit_height
+def resizeimage_to_fit(image, fit_width, fit_height, save=False, temp_menuImg=None): # Resize image to fit a rectangle fit_width x fit_height
     global win_width, win_height 
     image_width, image_height = image.size # Get image dimentions
 
@@ -47,7 +63,11 @@ def resizeimage_to_fit(image, fit_width, fit_height): # Resize image to fit a re
     if h_ratio < w_ratio: w_ratio = h_ratio # Set up smallest ratio
     elif w_ratio < h_ratio: h_ratio = w_ratio # Set up smallest ratio
     
-    return ImageTk.PhotoImage(image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS)) # Resize Image
+    resized_img = image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS)
+
+    if save: temp_menuImg = menuImg(resized_img, (int(image_width*w_ratio), int(image_height*h_ratio))) # Store image and dimentions
+    
+    return ImageTk.PhotoImage(resized_img) # Resize Image
 
 
 def forward():
@@ -103,20 +123,20 @@ def pic_menu_destroy(next_screen): # next_screen -> 0 Main menu , 1 Image menu, 
 
 
 def pic_menu_put():
-    global root, vertical_menu_offset, backbutton, fullscreenbutton, exitbutton, menubutton, forwardbutton, side_buttons, middle_buttons
+    global root, vertical_menu_offset, backbutton, fullscreenbutton, menu_exitbutton, menubutton, forwardbutton, side_buttons, middle_buttons
     #image_forwardbutton = PhotoImage(file=image_forwardbutton_location).subsample(button_subsample_factor, button_subsample_factor)
     #image_backbutton = PhotoImage(file=image_backbutton_location).subsample(button_subsample_factor, button_subsample_factor)
 
     #backbutton = Button(root, image=image_backbutton, command=thing2, borderwidth=0, cursor='hand2')
     backbutton = Button(root, text = "<< Back", command=back, cursor='hand2')
     fullscreenbutton = Button(root, text = "Full Screen", command=lambda: pic_menu_destroy(2), cursor='hand2')
-    exitbutton = Button(root, text = "Exit Program", command=root.destroy, cursor='hand2')
-    menubutton = Button(root, text = "Menu", command=root.destroy, cursor='hand2')
+    menu_exitbutton = Button(root, text = "Exit Program", command=root.destroy, cursor='hand2')
+    menubutton = Button(root, text = "Menu", command=lambda: pic_menu_destroy(0), cursor='hand2')
     #forwardbutton = Button(root, image=image_forwardbutton, command=thing1, borderwidth=0, cursor='hand2')
     forwardbutton = Button(root, text = "Forward >>", command=forward, cursor='hand1')
 
     side_buttons = [backbutton, forwardbutton]
-    middle_buttons = [fullscreenbutton, exitbutton, menubutton]
+    middle_buttons = [fullscreenbutton, menu_exitbutton, menubutton]
 
     Grid.rowconfigure(root, index=0, weight=2) # index is the row number
     Grid.columnconfigure(root, index=0, weight=2)
@@ -139,13 +159,18 @@ def pictures_menu():
     
     
 def load_mainmenu_images():
-    global list_mainmenu_imgs_locations, win_width, win_height
-    global img_settingsbutton, img_locationbutton, img_picturesbutton, img_exitbutton
-    
-    img_settingsbutton = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[0]), (root.winfo_screenwidth()/2) , (root.winfo_screenheight()/2) )
-    img_locationbutton = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[1]), (root.winfo_screenwidth()/2) , (root.winfo_screenheight()/2) )   
-    img_picturesbutton = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[2]), (root.winfo_screenwidth()/2) , (root.winfo_screenheight()/2) )
-    img_exitbutton = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[3]), (root.winfo_screenwidth()/2) , (root.winfo_screenheight()/2) )   
+    global list_mainmenu_imgs_locations, win_width, win_height, menuImg
+    global img_settingsbutton_tk, img_locationbutton_tk, img_picturesbutton_tk, img_exitbutton_tk
+
+    img_settingsbutton = menuImg()
+    img_locationbutton = menuImg()
+    img_picturesbutton = menuImg()
+    img_exitbutton = menuImg()
+
+    img_settingsbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[0]), (win_width/2) , (win_height/2), True, img_settingsbutton)
+    img_locationbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[1]), (win_width/2) , (win_height/2), True, img_locationbutton)   
+    img_picturesbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[2]), (win_width/2) , (win_height/2), True, img_picturesbutton)
+    img_exitbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[3]), (win_width/2) , (win_height/2), True, img_exitbutton)   
 
 
 def main_menu_destroy(next_screen):
@@ -164,10 +189,10 @@ def main_menu():
     Grid.rowconfigure(root, index=1, weight=1) # index is the row number
     Grid.columnconfigure(root, index=1, weight=1)
 
-    picturesbutton = Button(root, image=img_picturesbutton, command=lambda: main_menu_destroy(1), cursor='hand2')
-    locationbutton = Button(root, image=img_locationbutton, command=lambda: main_menu_destroy(3), cursor='hand2')
-    settingsbutton = Button(root, image=img_settingsbutton, command=lambda: main_menu_destroy(4), cursor='hand2')
-    exitbutton = Button(root, image=img_exitbutton, command=root.destroy, cursor='hand2')
+    picturesbutton = Button(root, image=img_picturesbutton_tk, command=lambda: main_menu_destroy(1), cursor='hand2')
+    locationbutton = Button(root, image=img_locationbutton_tk, command=lambda: main_menu_destroy(3), cursor='hand2')
+    settingsbutton = Button(root, image=img_settingsbutton_tk, command=lambda: main_menu_destroy(4), cursor='hand2')
+    exitbutton = Button(root, image=img_exitbutton_tk, command=root.destroy, cursor='hand2')
 
     picturesbutton.grid(row=0, column=0, sticky="ew")
     locationbutton.grid(row=0, column=1, sticky="ew")
@@ -208,8 +233,8 @@ if __name__ == "__main__":
         load_files()
         while True:
             main()
-    except:
-        root.destroy
+#     except:
+#         root.destroy
     finally:
 #        ser.close()
 #        f.close()
