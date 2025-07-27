@@ -2,8 +2,10 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Implemented class menuImg
-##                
+## Release notes: Updated resizeimage_to_fit to save instances of menuImg
+##                Fixed buttons' size bug of main menu
+##                Updated main menu images
+##                Implemented auto change image for fullscreen mode
 ##                
 #######################################################################################################################
 
@@ -25,10 +27,10 @@ image_1_location = "Images/jss_icon_test_2.png"
 image_2_location = "Images/big_image.jpeg"
 image_3_location = "Images/background_example.jpeg"
 
-img_settingsbutton_location = "Images/Settings_Icon.jpeg"
-img_picturesbutton_location = "Images/pics_icon.png"
-img_exitbutton_location = "Images/exit_icon.png"
-img_locationbutton_location = "Images/location_icon_1.png"
+img_settingsbutton_location = "Images/Settings_Icon_6.png"
+img_picturesbutton_location = "Images/pics_icon_1.png"
+img_exitbutton_location = "Images/exit_icon_3.png"
+img_locationbutton_location = "Images/location_icon_1.png" #
 image_backbutton_location = 'Images/right_transparent_arrow.png'
 image_forwardbutton_location = 'Images/right_transparent_arrow.png'
 
@@ -45,10 +47,10 @@ class menuImg:
         self.height = height
         self.tkindex = tkindex
     def __str__(self): # STR Method - to print the class
-        return self.image
+        return f"This is a image used in the menu screens, Width {self.width} Height{self.height}."
     def info(self):
         """This Method return information about the class menuImg."""
-        return f"This is a image used in the manu screens, Width {self.width} Height{self.height}."
+        return f"This is a image used in the menu screens, Width {self.width} Height {self.height}."
 
 
 ############################### Definitions - Functions #################################################################
@@ -65,7 +67,10 @@ def resizeimage_to_fit(image, fit_width, fit_height, save=False, temp_menuImg=No
     
     resized_img = image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS)
 
-    if save: temp_menuImg = menuImg(resized_img, (int(image_width*w_ratio), int(image_height*h_ratio))) # Store image and dimentions
+    if save:
+        temp_menuImg.image = resized_img # Store image
+        temp_menuImg.width = int(image_width*w_ratio) # Store image dimentions
+        temp_menuImg.height = int(image_height*h_ratio) # Store image dimentions
     
     return ImageTk.PhotoImage(resized_img) # Resize Image
 
@@ -90,22 +95,29 @@ def fullscreen_toggle():
     elif current_screen == 2: # 2 Image full screen
         image_destroy(1)
 
+def image_auto_update():
+    forward()
+
 
 def image_destroy(next_screen):
-    global current_screen
+    global current_screen, last_screen
+    last_screen = current_screen
     current_screen = next_screen # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
     curr_image_button.destroy()
     main()
 
 
 def image_put():
-    global root, img_index, image_list, vertical_menu_offset, list_len
+    global root, img_index, image_list, vertical_menu_offset, list_len, img_loop
     global win_width, win_height, curr_image_button, current_screen, curr_image
 
     if current_screen == 1: # 1 Image menu
         curr_image = resizeimage_to_fit(Image.open(image_list[img_index]), root.winfo_screenwidth(), (root.winfo_screenheight() - vertical_menu_offset))
+        #if last_screen == 2: curr_image_button.after(cancel)
+        if last_screen == 2: root.after_cancel(img_loop)
     elif current_screen == 2: # 2 Image full screen
         curr_image = resizeimage_to_fit(Image.open(image_list[img_index]), root.winfo_screenwidth(), root.winfo_screenheight())
+        img_loop = root.after(3000, image_auto_update)
     else: return 1
     
     curr_image_button = Button(root, image=curr_image, command=fullscreen_toggle, cursor='hand2')
@@ -161,16 +173,17 @@ def pictures_menu():
 def load_mainmenu_images():
     global list_mainmenu_imgs_locations, win_width, win_height, menuImg
     global img_settingsbutton_tk, img_locationbutton_tk, img_picturesbutton_tk, img_exitbutton_tk
+    global img_settingsbutton, img_locationbutton, img_picturesbutton, img_exitbutton
 
     img_settingsbutton = menuImg()
     img_locationbutton = menuImg()
     img_picturesbutton = menuImg()
     img_exitbutton = menuImg()
 
-    img_settingsbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[0]), (win_width/2) , (win_height/2), True, img_settingsbutton)
-    img_locationbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[1]), (win_width/2) , (win_height/2), True, img_locationbutton)   
-    img_picturesbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[2]), (win_width/2) , (win_height/2), True, img_picturesbutton)
-    img_exitbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[3]), (win_width/2) , (win_height/2), True, img_exitbutton)   
+    img_settingsbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[0]), (win_width/2), (win_height/2), True, img_settingsbutton)
+    img_locationbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[1]), (win_width/2), (win_height/2), True, img_locationbutton)   
+    img_picturesbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[2]), (win_width/2), (win_height/2), True, img_picturesbutton)
+    img_exitbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[3]), (win_width/2), (win_height/2), True, img_exitbutton)   
 
 
 def main_menu_destroy(next_screen):
@@ -183,21 +196,17 @@ def main_menu_destroy(next_screen):
 
 def main_menu():
     global root, list_mainmenu_imgs_locations, list_mainmenu_buttons
+    global img_settingsbutton, img_locationbutton, img_picturesbutton, img_exitbutton
     
-    Grid.rowconfigure(root, index=0, weight=1) # index is the row number
-    Grid.columnconfigure(root, index=0, weight=1)
-    Grid.rowconfigure(root, index=1, weight=1) # index is the row number
-    Grid.columnconfigure(root, index=1, weight=1)
-
     picturesbutton = Button(root, image=img_picturesbutton_tk, command=lambda: main_menu_destroy(1), cursor='hand2')
     locationbutton = Button(root, image=img_locationbutton_tk, command=lambda: main_menu_destroy(3), cursor='hand2')
     settingsbutton = Button(root, image=img_settingsbutton_tk, command=lambda: main_menu_destroy(4), cursor='hand2')
     exitbutton = Button(root, image=img_exitbutton_tk, command=root.destroy, cursor='hand2')
 
-    picturesbutton.grid(row=0, column=0, sticky="ew")
-    locationbutton.grid(row=0, column=1, sticky="ew")
-    settingsbutton.grid(row=1, column=0, sticky="ew")
-    exitbutton.grid(row=1, column=1, sticky="ew")
+    picturesbutton.grid(row=0, column=0, ipadx=int((win_width/2 - img_picturesbutton.width)/2), ipady=0)
+    locationbutton.grid(row=0, column=1, ipadx=int((win_width/2 - img_locationbutton.width)/2), ipady=0)
+    settingsbutton.grid(row=1, column=0, ipadx=int((win_width/2 - img_settingsbutton.width)/2), ipady=0)
+    exitbutton.grid(row=1, column=1, ipadx=int((win_width/2 - img_exitbutton.width)/2), ipady=0)
 
     list_mainmenu_buttons = [picturesbutton, locationbutton, settingsbutton, exitbutton]
 
@@ -223,7 +232,7 @@ list_mainmenu_imgs_locations = [img_settingsbutton_location, img_locationbutton_
 image_list = [image_1_location, image_2_location, image_3_location] # Set up a list of image locations
 img_index = 0
 list_len = len(image_list)
-#last_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
+last_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
 win_width = root.winfo_screenwidth()
 win_height = root.winfo_screenheight()
 
@@ -233,9 +242,10 @@ if __name__ == "__main__":
         load_files()
         while True:
             main()
-#     except:
-#         root.destroy
+    except:
+        root.destroy
     finally:
 #        ser.close()
 #        f.close()
         print('Program Closed')
+
