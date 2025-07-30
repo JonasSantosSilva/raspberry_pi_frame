@@ -2,16 +2,16 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Updated resizeimage_to_fit to save instances of menuImg
-##                Fixed buttons' size bug of main menu
-##                Updated main menu images
-##                Implemented auto change image for fullscreen mode
+## Release notes: Location button implemented
+##                Fixed the bug of returning to main menu from the location function
 ##                
 #######################################################################################################################
 
 ############################### Imports ##############################################################################
 from tkinter import *
 from PIL import ImageTk, Image
+import GPS_03
+#import subprocess
 #from tkinter import filedialog
 
 ############################### Definitions - Main Window ####################################################################
@@ -33,6 +33,8 @@ img_exitbutton_location = "Images/exit_icon_3.png"
 img_locationbutton_location = "Images/location_icon_1.png" #
 image_backbutton_location = 'Images/right_transparent_arrow.png'
 image_forwardbutton_location = 'Images/right_transparent_arrow.png'
+
+cmd_py_location = '/home/pi/Documents/Python/Projects/GPS_0.3.py'
 
 vertical_menu_offset = 30 # Offset to fit the image menu
 current_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
@@ -95,8 +97,22 @@ def fullscreen_toggle():
     elif current_screen == 2: # 2 Image full screen
         image_destroy(1)
 
+
 def image_auto_update():
     forward()
+
+
+def call_location_script():
+    global current_screen
+    current_screen = 0
+    print("ImageDatabase_012.py - call_location_script - start")
+    GPS_03.main()
+    print("ImageDatabase_012.py - call_location_script - end")
+    main()
+#     global subprocess
+#     p = subprocess.Popen(cmd_py_location, shell=True)
+#     out, err = p.communicate()
+#     print(f"call_location_script() - out {out} err {err}")
 
 
 def image_destroy(next_screen):
@@ -220,6 +236,8 @@ def main():
         pic_menu_put() # Put the image menu onto window
     elif current_screen == 2: # 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
         image_put()
+    elif current_screen == 3: # 1 Image menu, 2 Image full screen, 3 My location, 4 Settings        
+        call_location_script()
     root.mainloop()# Main Loop
 
 
@@ -248,4 +266,5 @@ if __name__ == "__main__":
 #        ser.close()
 #        f.close()
         print('Program Closed')
+
 
