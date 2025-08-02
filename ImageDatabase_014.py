@@ -2,11 +2,8 @@
 ## Title: Digital photo frame application
 ## Autor: Jonas dos Santos Silva
 ## Date: 09/2021
-## Release notes: Removed Fullscreen and Exit buttons from pictutre menu
-##                Implemented read config file
-##                Implemented write config file
-##                Implemented settings menu
-##                Implemented "settings_menu_destroy" function
+## Release notes: Implemented read files from folder
+##                Updated image folder to google drive
 ##                
 #######################################################################################################################
 
@@ -14,6 +11,7 @@
 from tkinter import *
 from PIL import ImageTk, Image
 import GPS_03
+import os
 #import subprocess
 #from tkinter import filedialog
 
@@ -26,6 +24,10 @@ root = Tk()
 root.title("## Test ##")
 root.attributes('-fullscreen', True)
 
+# cloud_folder_path = r'/home/pi/Documents/Python/Projects/Images'
+cloud_folder_path = r'/home/pi/Documents/Python/Projects/Photos'
+# cloud_folder_path = r'/home/pi/mnt/gdrive/SheredCloudPictures'
+
 image_1_location = "Images/jss_icon_test_2.png"
 image_2_location = "Images/big_image.jpeg"
 image_3_location = "Images/background_example.jpeg"
@@ -37,6 +39,8 @@ img_locationbutton_location = "Images/location_icon_1.png"
 image_backbutton_location = 'Images/right_transparent_arrow.png'
 image_forwardbutton_location = 'Images/right_transparent_arrow.png'
 
+#list_supported_img_ext = []
+
 cmd_py_location = '/home/pi/Documents/Python/Projects/GPS_0.3.py'
 
 vertical_menu_offset = 30 # Offset to fit the image menu
@@ -45,7 +49,7 @@ pic_change_delay_ms = 3000 # Time bewtween chamging pictures in fullscreen mode 
 
 
 ############################### Definitions - Classes #################################################################
-class menuImg:
+class loadedImg:
     def __init__(self, image=None, width=None, height=None, tkindex=None):
         """Constructor Method"""
         self.image = image
@@ -53,15 +57,43 @@ class menuImg:
         self.height = height
         self.tkindex = tkindex
     def __str__(self): # STR Method - to print the class
-        return f"This is a image used in the menu screens, Width {self.width} Height{self.height}."
+        return f"This is a pre-loaded image, Width {self.width} Height{self.height}."
     def info(self):
-        """This Method return information about the class menuImg."""
-        return f"This is a image used in the menu screens, Width {self.width} Height {self.height}."
+        """This Method return information about the class loadedImg."""
+        return f"This is a pre-loaded image, Width {self.width} Height{self.height}."
 
 
 ############################### Definitions - Functions #################################################################
 
-def resizeimage_to_fit(image, fit_width, fit_height, save=False, temp_menuImg=None): # Resize image to fit a rectangle fit_width x fit_height
+def get_images_location():
+    global cloud_folder_path, files_location, list_len
+    #global list_supported_img_ext
+    
+    file_names = os.listdir(cloud_folder_path)
+    for file_name in file_names:
+        files_location.append(os.path.abspath(os.path.join(cloud_folder_path, file_name)))
+    
+    list_len = len(files_location)
+    #print(files_location)
+
+
+def load_mainmenu_images():
+    global list_mainmenu_imgs_locations, win_width, win_height, loadedImg
+    global img_settingsbutton_tk, img_locationbutton_tk, img_picturesbutton_tk, img_exitbutton_tk
+    global img_settingsbutton, img_locationbutton, img_picturesbutton, img_exitbutton
+
+    img_settingsbutton = loadedImg()
+    img_locationbutton = loadedImg()
+    img_picturesbutton = loadedImg()
+    img_exitbutton = loadedImg()
+
+    img_settingsbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[0]), (win_width/2), (win_height/2), True, img_settingsbutton)
+    img_locationbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[1]), (win_width/2), (win_height/2), True, img_locationbutton)   
+    img_picturesbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[2]), (win_width/2), (win_height/2), True, img_picturesbutton)
+    img_exitbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[3]), (win_width/2), (win_height/2), True, img_exitbutton)   
+
+
+def resizeimage_to_fit(image, fit_width, fit_height, save=False, temp_loadedImg=None): # Resize image to fit a rectangle fit_width x fit_height
     global win_width, win_height 
     image_width, image_height = image.size # Get image dimentions
 
@@ -74,11 +106,12 @@ def resizeimage_to_fit(image, fit_width, fit_height, save=False, temp_menuImg=No
     resized_img = image.resize((int(image_width*w_ratio), int(image_height*h_ratio)), Image.ANTIALIAS)
 
     if save:
-        temp_menuImg.image = resized_img # Store image
-        temp_menuImg.width = int(image_width*w_ratio) # Store image dimentions
-        temp_menuImg.height = int(image_height*h_ratio) # Store image dimentions
+        temp_loadedImg.image = resized_img # Store image
+        temp_loadedImg.width = int(image_width*w_ratio) # Store image dimentions
+        temp_loadedImg.height = int(image_height*h_ratio) # Store image dimentions
+        temp_loadedImg.tkindex = ImageTk.PhotoImage(resized_img)
     
-    return ImageTk.PhotoImage(resized_img) # Resize Image
+    return ImageTk.PhotoImage(resized_img) # Tkinter image index for Resized Image
 
 
 def forward():
@@ -119,10 +152,6 @@ def call_location_script():
     current_screen = 0
     GPS_03.main()
     main()
-#     global subprocess
-#     p = subprocess.Popen(cmd_py_location, shell=True)
-#     out, err = p.communicate()
-#     print(f"call_location_script() - out {out} err {err}")
 
 
 def image_destroy(next_screen):
@@ -134,16 +163,25 @@ def image_destroy(next_screen):
 
 
 def image_put():
-    global root, img_index, image_list, vertical_menu_offset, list_len, img_loop
+    global root, img_index, files_location, vertical_menu_offset, list_len, img_loop
     global win_width, win_height, curr_image_button, current_screen, curr_image
+    
+    get_images_location()
 
     if current_screen == 1: # 1 Image menu
-        curr_image = resizeimage_to_fit(Image.open(image_list[img_index]), root.winfo_screenwidth(), (root.winfo_screenheight() - vertical_menu_offset))
-        #if last_screen == 2: curr_image_button.after(cancel)
-        if last_screen == 2: root.after_cancel(img_loop)
+        try:
+            curr_image = resizeimage_to_fit(Image.open(files_location[img_index]), root.winfo_screenwidth(), (root.winfo_screenheight() - vertical_menu_offset))
+        except:
+            print("Fail to open file as image:\n", files_location[img_index])
+        finally:
+            if last_screen == 2: root.after_cancel(img_loop)
     elif current_screen == 2: # 2 Image full screen
-        curr_image = resizeimage_to_fit(Image.open(image_list[img_index]), root.winfo_screenwidth(), root.winfo_screenheight())
-        img_loop = root.after(pic_change_delay_ms, image_auto_update)
+        try:
+            curr_image = resizeimage_to_fit(Image.open(files_location[img_index]), root.winfo_screenwidth(), root.winfo_screenheight())
+        except:
+            print("Fail to open file as image:\n", files_location[img_index])
+        finally:
+            img_loop = root.after(pic_change_delay_ms, image_auto_update)
     else: return 1
     
     curr_image_button = Button(root, image=curr_image, command=fullscreen_toggle, cursor='hand2')
@@ -186,22 +224,6 @@ def pictures_menu():
     pic_menu_put() # Put the first tiem the menu onto window
     
     
-def load_mainmenu_images():
-    global list_mainmenu_imgs_locations, win_width, win_height, menuImg
-    global img_settingsbutton_tk, img_locationbutton_tk, img_picturesbutton_tk, img_exitbutton_tk
-    global img_settingsbutton, img_locationbutton, img_picturesbutton, img_exitbutton
-
-    img_settingsbutton = menuImg()
-    img_locationbutton = menuImg()
-    img_picturesbutton = menuImg()
-    img_exitbutton = menuImg()
-
-    img_settingsbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[0]), (win_width/2), (win_height/2), True, img_settingsbutton)
-    img_locationbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[1]), (win_width/2), (win_height/2), True, img_locationbutton)   
-    img_picturesbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[2]), (win_width/2), (win_height/2), True, img_picturesbutton)
-    img_exitbutton_tk = resizeimage_to_fit(Image.open(list_mainmenu_imgs_locations[3]), (win_width/2), (win_height/2), True, img_exitbutton)   
-
-
 def settings_menu_destroy(next_screen):
     global current_screen, list_settings_menu_widgets
 
@@ -272,7 +294,7 @@ def settings_file_read_apply():
             config_content = config.read()
             # Here should call the config parser
             pic_change_delay_ms = int(config_content)
-            print("settings_file_read_apply - pic_change_delay_ms", pic_change_delay_ms)
+            print("Settings applied:\n\tpic_change_delay_ms = ", pic_change_delay_ms)
     except:
         print("WARNING: Config file not found, standard settings applied.")
 
@@ -327,7 +349,7 @@ def load_files():
 list_mainmenu_imgs_locations = [img_settingsbutton_location, img_locationbutton_location, img_picturesbutton_location, img_exitbutton_location]
 image_list = [image_1_location, image_2_location, image_3_location] # Set up a list of image locations
 img_index = 0
-list_len = len(image_list)
+files_location = [] # Used to store the file names in the images folder
 last_screen = 0 # 0 Main menu , 1 Image menu, 2 Image full screen, 3 My location, 4 Settings
 win_width = root.winfo_screenwidth()
 win_height = root.winfo_screenheight()
@@ -344,6 +366,7 @@ if __name__ == "__main__":
 #        ser.close()
 #        f.close()
         print('Program Closed')
+
 
 
 
