@@ -251,7 +251,7 @@ def settings_menu():
               ("16s", "8000")]
 
     delay = StringVar()
-    delay.set("3000")
+    delay.set(pic_change_delay_ms)
     
 #     for text, time_ms in delays: # Declaring Radio Buttons
 #         Radiobutton(root, text=text, variable=delay, value=time_ms, font=("Helvetica", 16)).pack(pady=10)
