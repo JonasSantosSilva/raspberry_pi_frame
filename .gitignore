@@ -1,0 +1,39 @@
+# Claude Code
+CLAUDE.md
+
+# Reports
+*.pdf
+*.docx
+
+# Datasets
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-selfcheck.json
+*.egg-info/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Distribution / packaging
+dist/
+build/
+*.log
+
+# IDEs
+.idea/
+.vscode/
+
+# Photos folder (not tracked)
+Photos/
+
+# Others
+*.txt
